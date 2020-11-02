@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Project 4</title>
+</head>
+<body>
+<div style="width: 1000px">
+    <h4>
+        Bellow is a network visualization for the social connects in a pod of dolphins.
+        The color of each node indicates the number of social connections or "friendships" that the dolphin has with light
+        blue representing little connections and the dark blue representing more connections. This network is movable by
+        clicking the nodes and dragging them.
+    </h4>
+    <h4>
+        Hypothesis: Dolphins are social creatures and only a small portion of dolphins have only one friendship.
+    </h4>
+</div>
+<canvas id="network" width="1000" height="800"></canvas>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<script>
+
+    var canvas = d3.select("#network"),
+        width = canvas.attr("width"),
+        height = canvas.attr("height"),
+        r = 10,
+        color = d3.scaleLinear().domain([1, 12]).range(['#00ffff', '#0000cc']),
+        ctx = canvas.node().getContext("2d"),
+        xpos = d3.scaleOrdinal().range([0, width]),
+        ypos = d3.scaleOrdinal().range([0, height]),
+        simulation = d3.forceSimulation()
+            .force("x", d3.forceX(function (d) {
+                return xpos(d.degree);
+            }))
+            .force("y", d3.forceY(height / 2))
+            .force("collide", d3.forceCollide(r + 1))
+            .force("charge", d3.forceManyBody()
+                .strength(function (d) {
+                    return -(d.degree * 50);
+                }))
+            .force("link", d3.forceLink()
+                // .strength() // here is where you could add strength based on some object attribute
+                .id(function (d) {
+                    return d.id;
+                }));
+
+    d3.json("dolphins.json", function (err, graph) {
+        if (err) throw err;
+
+        simulation
+            .nodes(graph.nodes)
+            .on("tick", update)
+            
+            .force("link")
+            .links(graph.links);
+
+        canvas
+            .call(d3.drag()
+                .container(canvas.node())
+                .subject(dragsubject)
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+
+        function update() {
+            ctx.clearRect(0, 0, width, height);
+
+            ctx.beginPath();
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = "#aaa";
+            graph.links.forEach(drawLink);
+            ctx.stroke();
+
+
+            ctx.globalAlpha = 1.0;
+            graph.nodes.forEach(drawNode);
+
+            // puts labels on nodes
+            graph.nodes.forEach(drawLabel);
+
+        }
+
+        function dragsubject() {
+            return simulation.find(d3.event.x, d3.event.y);
+        }
+
+        function mouseover() {
+            return simulation.find(d3.event.x, d3.event.y);
+        }
+
+    })
+
+    function drawLabel(d) {
+        ctx.font = "bold 14px Helvetica, Arial, sans-serif";
+        ctx.fillStyle = "#000000";
+        ctx.fillText(d.id, d.x, d.y);
+
+    }
+
+    function drawNode(d) {
+        ctx.beginPath();
+        ctx.fillStyle = color(d.degree);
+        ctx.moveTo(d.x, d.y);
+        ctx.arc(d.x, d.y, r, 0, 2 * Math.PI);
+        ctx.fill();
+
+
+    }
+
+    function drawLink(l) {
+        ctx.moveTo(l.source.x, l.source.y);
+        ctx.lineTo(l.target.x, l.target.y);
+    }
+
+    function dragstarted() {
+        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+        d3.event.subject.fx = d3.event.subject.x;
+        d3.event.subject.fy = d3.event.subject.y;
+        console.log(d3.event.subject);
+    }
+
+    function dragged() {
+        d3.event.subject.fx = d3.event.x;
+        d3.event.subject.fy = d3.event.y;
+    }
+
+    function dragended() {
+        if (!d3.event.active) simulation.alphaTarget(0);
+        d3.event.subject.fx = null;
+        d3.event.subject.fy = null;
+    }
+
+
+</script>
+
+</body>
+</html>

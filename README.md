@@ -12,7 +12,7 @@ To view the plot please go to: https://daithimartin.github.io/data_vis_project4/
 
 ## Project Structure
 ---
-
+This project is contained in the repository: https://github.com/DaithiMartin/data_vis_project4
 Included are all files used to process the data and the original data file. 
 
 For the marked up figure, please refer to annotated_network.pdf in the repository.
